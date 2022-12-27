@@ -1,0 +1,9 @@
+{% extends 'layout.html' %}
+  
+{% block title %}Home{% endblock %}
+  
+{% block content %}
+<h1 class="h2">Dashboard</h1>
+<a href="{{ url_for('upload') }}">upload</a>
+<p>Welcome back, {{ username }}!</p>
+{% endblock %}
