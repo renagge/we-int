@@ -25,9 +25,12 @@ conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASS, host=DB_
 def home():
     # Check if user is loggedin
     if 'loggedin' in session:
-    
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        s = "SELECT * FROM students"
+        cur.execute(s) # Execute the SQL
+        list_users = cur.fetchall()
         # User is loggedin show them the home page
-        return render_template('home.html', username=session['username'])
+        return render_template('home.html', username=session['username'],list_users = list_users)
     # User is not loggedin redirect to login page
     return redirect(url_for('index'))
         
@@ -190,62 +193,54 @@ def display_image(filename):
 
 
 #============================================================Routing Dahsboard=================================================================
-@app.route('/post',methods=['POST','POST'])
-def post():
-    if 'loggedin' in session:
-        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        if request.method == 'POST' and 'tittle_post' in request.form and 'body_post' in request.form and 'date_post' in request.form:
-            tittle_post = request.form['tittle_post']
-            body_post = request.form['body_post']
-            date_post = request.form['date_post']
-            cur.execute("INSERT INTO post (tittle_post,body_post,date_post) VALUES (%s,%s,%s)",(tittle_post,body_post,date_post))
-            conn.commit()
-            flash('Post Added successfully')
+@app.route('/add_student', methods=['POST'])
+def add_student():
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if request.method == 'POST':
+        tit = request.form['tit']
+        stit = request.form['stit']
+        text = request.form['text']
+        cur.execute("INSERT INTO students (tit, stit, text) VALUES (%s,%s,%s)", (tit, stit, text))
+        conn.commit()
+        flash('Student Added successfully')
         return redirect(url_for('home'))
-    # User is not loggedin redirect to login page
-    return redirect(url_for('login'))
-
+ 
 @app.route('/edit/<id>', methods = ['POST', 'GET'])
-def get_post(id):
-   cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-   if 'loggedin' in session:
-            cur.execute('SELECT * FROM post WHERE id = %s', (id))
-            data = cur.fetchall()
-            cur.close()
-            print(data[0])
-            return render_template('edit.html', post = data[0])
-            return redirect(url_for('login'))
-
+def get_employee(id):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+   
+    cur.execute('SELECT * FROM students WHERE id = %s', (id))
+    data = cur.fetchall()
+    cur.close()
+    print(data[0])
+    return render_template('edit.html', student = data[0])
+ 
 @app.route('/update/<id>', methods=['POST'])
-def update_post(id):
-    if 'loggedin' in session:
-        if request.method == 'POST':
-            tittle_post = request.form['tittle_post']
-            body_post = request.form['body_post']
-            date_post = request.form['date_post']
+def update_student(id):
+    if request.method == 'POST':
+        tit = request.form['tit']
+        stit = request.form['stit']
+        text = request.form['text']
          
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
-            UPDATE post
-            SET tittle_post = %s,
-                body_post = %s,
-                date_post = %s
+            UPDATE students
+            SET tit = %s,
+                stit = %s,
+                text = %s
             WHERE id = %s
-        """, (tittle_post, body_post, date_post, id))
-        flash('Post Updated Successfully')
+        """, (tit, stit, text, id))
+        flash('Student Updated Successfully')
         conn.commit()
-        return redirect(url_for('Index'))
-    return redirect(url_for('login'))
-
+        return redirect(url_for('home'))
+ 
 @app.route('/delete/<string:id>', methods = ['POST','GET'])
 def delete_student(id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    if 'loggedin' in session:  
-        cur.execute('DELETE FROM post WHERE id = {0}'.format(id))
-        conn.commit()
-        flash('Post Removed Successfully')
-        return redirect(url_for('Index'))
-    return redirect(url_for('login'))
+    cur.execute('DELETE FROM students WHERE id = {0}'.format(id))
+    conn.commit()
+    flash('Student Removed Successfully')
+    return redirect(url_for('home'))
 
 if __name__ == "__main__":
     app.run(debug=True)
