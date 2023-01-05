@@ -1,0 +1,28 @@
+1 instlll enveropment
+2 pip install -r req.txt
+create data base in posgre sql name test 
+
+  CREATE TABLE users(
+   id int,
+   fullname varying,
+   username varying,
+   password varying,
+   email varying
+   PRIMARY KEY(id)
+);
+   CREATE TABLE post(
+   id int,
+   tittle_post varying,
+   body_post varying,
+   date_post varying
+   PRIMARY KEY(id)
+);
+    CREATE TABLE images(
+   id int,
+   file_name varying,
+   uploaded_on varying
+   PRIMARY KEY(id)
+);
+
+
+  
