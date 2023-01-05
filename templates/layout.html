@@ -18,25 +18,25 @@
    
  <div class="container-fluid">
       <div class="row">
-        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+        <nav class="col-md-1 d-none d-md-block bg-light sidebar">
           <div class="sidebar-sticky">
             <ul class="nav flex-column">
-              <li class="nav-item">
+              <li class=>
                 <a class="nav-link active" href="#">
                   <i class="fas fa-home"></i>
                   Dashboard <span class="sr-only">(current)</span>
                 </a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#">
+                <a class="nav-link" href="{{ url_for('storage') }}">
                     <i class="fas fa-tags"></i>
-                  Topic
+                  storage
                 </a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#">
+              <li >
+                <a  href="#">
                     <i class="fas fa-door-open"></i>
-                  Room
+                  room
                 </a>
               </li>
             </ul>
@@ -53,7 +53,34 @@
      
       </div>
     </div>
-   
+  
+<div class="container pt-4">
+  {% block body %}
+  {% endblock %}
+</div>
+
+<script>
+const btnDelete= document.querySelectorAll('.btn-delete');
+if(btnDelete) {
+const btnArray = Array.from(btnDelete);
+btnArray.forEach((btn) => {
+btn.addEventListener('click', (e) => {
+  if(!confirm('Are you sure you want to delete it?')){
+    e.preventDefault();
+  }
+});
+})
+}
+
+$(document).ready(function() {
+$('#example').DataTable({     
+  "aLengthMenu": [[3, 5, 10, 25, -1], [3, 5, 10, 25, "All"]],
+    "iDisplayLength": 3
+   } 
+);
+} );
+
+</script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
  </body>
