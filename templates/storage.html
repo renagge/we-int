@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <title>Storage</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />  
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>  
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+<div><h2>Storage</h2>
+    <div><a class="py-2 d-none d-md-inline-block" href="{{ url_for('home') }}"><i class="fas fa-sign-out-alt"></i> Home</a></div>
+</div>
+    <div class="row">
+        <div class="col-lg-12">
+            <p>
+                {% with messages = get_flashed_messages() %}
+                  {% if messages %}
+                 {% for message in messages %}
+                   <div class="alert alert-success">
+                    <strong>{{ message }}</strong>
+                  </div>
+                 {% endfor %}
+                  {% endif %}
+                {% endwith %}
+               </p>
+               {% if filename %}
+               <div>
+                   <img src="{{ url_for('display_image', filename=filename) }}">
+               </div>
+           {% endif %}
+  <div>
+   <!-- File upload form -->
+   <form method="post" action="/upload" enctype="multipart/form-data" class="form-inline">
+        <div class="form-group">
+            <label>Choose Images: </label>
+            <input type="file" name="files[]" id="fileInput" class="form-control" multiple >
+        </div>
+            <input type="submit" name="submit" class="btn btn-success" value="UPLOAD"/>
+    </form>
+  </div>
+  <tbody>
+    {% for row in all_display %}
+  <div>
+      <div>  
+        <div> 
+              <div style="display: flex;
+              justify-content: space-between;"><t> name : {{row[1]}}</t> <t>uploaded on :{{row[2]}}</t></div> 
+              <h><a href="/del_str/{{row[0]}}" style="text-decoration: none;padding:10px;color:gray;">X</a>
+              </h>  
+              <h><a href="/display/{{row[1]}}" style="text-decoration: none;padding:10px;color:gray;">See</a>
+              </h>     
+        </div> 
+    </div>
+  </div>
+  <hr>
+  {% endfor %}
+</tbody>
+  </div>
+ </div>
+</div>
+<script>
+$(document).ready(function(){
+ // File type validation
+    $("#fileInput").change(function(){
+        var fileLength = this.files.length;
+        var match= ["image/jpeg","image/png","image/jpg","image/gif"];
+        var i;
+        for(i = 0; i < fileLength; i++){ 
+            var file = this.files[i];
+            var imagefile = file.type;
+            if(!((imagefile==match[0]) || (imagefile==match[1]) || (imagefile==match[2]) || (imagefile==match[3]))){
+                alert('Please select a valid image file (JPEG/JPG/PNG/GIF).');
+                $("#fileInput").val('');
+                return false;
+            }
+        }
+    });
+});
+</script>
+</body>
+</html>

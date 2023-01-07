@@ -1,0 +1,63 @@
+
+  
+{% block title %}
+<div style="display: flex;
+justify-content: space-between;">
+  <t>Chat room</t>
+  <a class="nav-link" href="{{ url_for('home') }}">back
+  </a>
+</div>
+{% endblock %}
+  <hr>
+{% block content %}
+
+{% endblock %}
+{% block body %}
+<div class="col-md-8">
+  <table id="example" class="" style="width:100%">
+      <tbody>
+          {% for row in chat_display %}
+        <div>
+            <div>  
+              <div> 
+                    <div style="padding: 10px;
+                    display: flex;
+                    justify-content: space-between;"><t> by : {{row[1]}}</t> <t>at :{{row[3]}}</t></div> 
+                    <div style="display: flex;
+                    justify-content: space-between;">
+                    <h>{{row[2]}} </h>                 
+                    <h><a href="/del_chat/{{row[0]}}" style="text-decoration: none;padding:10px;color:gray;">X</a>
+                    </h>
+                    </div>
+                        
+              </div> 
+          </div>
+        </div>
+        <hr style="border: outset;
+        border-color: aquamarine;">
+        {% endfor %}
+      </tbody>
+  </table>
+</div>
+
+  <div class="row"></div>
+  <div class="row">
+    <div class="col-md-4">
+      <hr>
+      <div class="card card-body">
+        <p>current account : {{ username }}!</p>
+        <form action="{{url_for('add_chat')}}" method="POST">
+            <tr class="form-group">
+              <input type="text" class="form-control" name="nickname" placeholder="nickname">
+            </tr>
+            <tr class="form-group">
+              <input type="text" class="form-control" name="chat" placeholder="insert chat">
+            </tr>
+            <br><button class="btn btn-primary btn-block">
+              Post 
+            </button>
+          
+          </form>
+      </div>
+    </div>
+{% endblock %}
