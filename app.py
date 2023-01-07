@@ -26,7 +26,7 @@ def home():
     # Check if user is loggedin
     if 'loggedin' in session:
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        s = "SELECT * FROM students"
+        s = "SELECT * FROM posted"
         cur.execute(s) # Execute the SQL
         list_users = cur.fetchall()
         # User is loggedin show them the home page
@@ -38,24 +38,32 @@ def home():
 def index():
      return render_template('index.html')
  
-@app.route('/storage')
+@app.route('/storage', methods=['POST','GET'])
 def storage():
+    # Check if user is loggedin
     if 'loggedin' in session:
-    
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c = "SELECT * FROM images"
+        cur.execute(c) # Execute the SQL
+        all_display = cur.fetchall()
         # User is loggedin show them the home page
-        return render_template('storage.html', username=session['username'])
+        return render_template('storage.html', username=session['username'],all_display = all_display)
     # User is not loggedin redirect to login page
     return redirect(url_for('login'))
-  
+
 @app.route('/profile', methods=['GET','POST'])
 def profile(): 
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
    
     # Check if user is loggedin
     if 'loggedin' in session:
+        #photo_profile  = request.form['photo_profile']
         cursor.execute('SELECT * FROM users WHERE id = %s', [session['id']])
         account = cursor.fetchone()
+        display_image = cursor.fetchone()
+        #image = cursor.fetchone(photo_profile)
         # Show the profile page with account info
+        
         return render_template('profile.html', account=account)
     # User is not loggedin redirect to login page
     return redirect(url_for('login'))
@@ -65,7 +73,6 @@ def profile():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
- 
     # Check if "username", "password" and "email" POST requests exist (user submitted form)
     if request.method == 'POST' and 'username' in request.form and 'password' in request.form and 'email' in request.form:
         # Create variables for easy access
@@ -73,6 +80,7 @@ def register():
         username = request.form['username']
         password = request.form['password']
         email = request.form['email']
+        photo_profile  = request.form['photo_profile']
     
         _hashed_password = generate_password_hash(password)
  
@@ -91,7 +99,7 @@ def register():
             flash('Please fill out the form!')
         else:
             # Account doesnt exists and the form data is valid, now insert new account into users table
-            cursor.execute("INSERT INTO users (fullname, username, password, email) VALUES (%s,%s,%s,%s)", (fullname, username, _hashed_password, email))
+            cursor.execute("INSERT INTO users (fullname, username, password, email,photo_profile) VALUES (%s,%s,%s,%s,%s)", (fullname, username, _hashed_password, email,photo_profile))
             conn.commit()
             flash('You have successfully registered! \
                 Please back to login menu')
@@ -159,25 +167,17 @@ def allowed_file(filename):
  return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-@app.route('/upload/',methods=["GET","POST"])
-def upload():
-    if request.method == "GET":
-        return render_template("upload.html")
-    elif request.method == "POST":
-        request.files.get("file")
-        return redirect(url_for('home'))
-
-
 @app.route("/upload",methods=["POST","GET"])
 def upload_storage():
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     now = datetime.now()
     print(now)
-    if request.method == 'POST':
-        files = request.files.getlist('files[]')
+    if 'loggedin' in session:
+        if request.method == 'POST':
+            files = request.files.getlist('files[]')
         #print(files)
-        for file in files:
-            if file and allowed_file(file.filename):
+            for file in files:
+             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 cur.execute("INSERT INTO images (file_name, uploaded_on) VALUES (%s, %s)",[filename, now])
@@ -185,62 +185,131 @@ def upload_storage():
             print(file)
         cur.close()   
         flash('File(s) successfully uploaded')    
-    return redirect('/storage')
+        return redirect(url_for('storage'))
+    return redirect(url_for('login'))
+
+@app.route('/del_str/<string:id>', methods = ['POST','GET'])
+def delete_str(id):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if 'loggedin' in session:
+        cur.execute('DELETE FROM images WHERE id = {0}'.format(id))
+        conn.commit()
+        flash('Post Removed Success')
+        return redirect(url_for('storage'))
+    return redirect(url_for('login'))
+
+
 @app.route('/display/<filename>')
 def display_image(filename):
-    #print('display_image filename: ' + filename)
+    print('display_image filename: ' + filename)
     return redirect(url_for('static', filename='uploads/' + filename), code=301)
 
 
+
+
+
 #============================================================Routing Dahsboard=================================================================
-@app.route('/add_student', methods=['POST'])
-def add_student():
+@app.route('/add_post', methods=['POST'])
+def add_post():
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    if request.method == 'POST':
-        tit = request.form['tit']
-        stit = request.form['stit']
-        text = request.form['text']
-        cur.execute("INSERT INTO students (tit, stit, text) VALUES (%s,%s,%s)", (tit, stit, text))
-        conn.commit()
-        flash('Student Added successfully')
-        return redirect(url_for('home'))
- 
+    if 'loggedin' in session:
+        if request.method == 'POST':
+         tit = request.form['tit']
+         stit = request.form['stit']
+         text = request.form['text']
+         cur.execute("INSERT INTO posted (tit, stit, text) VALUES (%s,%s,%s)", (tit, stit, text))
+         conn.commit()
+         flash(' Added successfully')
+         return redirect(url_for('home'))
+    return redirect(url_for('login'))
+
 @app.route('/edit/<id>', methods = ['POST', 'GET'])
 def get_employee(id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-   
-    cur.execute('SELECT * FROM students WHERE id = %s', (id))
-    data = cur.fetchall()
-    cur.close()
-    print(data[0])
-    return render_template('edit.html', student = data[0])
- 
+    if 'loggedin' in session:
+
+        cur.execute('SELECT * FROM posted WHERE id = %s', (id))
+        data = cur.fetchall()
+        cur.close()
+        print(data[0])
+        return render_template('edit.html', posted = data[0])
+    return redirect(url_for('login'))
 @app.route('/update/<id>', methods=['POST'])
-def update_student(id):
-    if request.method == 'POST':
-        tit = request.form['tit']
-        stit = request.form['stit']
-        text = request.form['text']
+def update_post(id):
+    if 'loggedin' in session:
+
+        if request.method == 'POST':
+         tit = request.form['tit']
+         stit = request.form['stit']
+         text = request.form['text']
          
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
-            UPDATE students
+            UPDATE posted
             SET tit = %s,
                 stit = %s,
                 text = %s
             WHERE id = %s
         """, (tit, stit, text, id))
-        flash('Student Updated Successfully')
+        flash('Editable Successfully')
         conn.commit()
         return redirect(url_for('home'))
- 
+    return redirect(url_for('login'))
 @app.route('/delete/<string:id>', methods = ['POST','GET'])
-def delete_student(id):
+def delete_post(id):
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute('DELETE FROM students WHERE id = {0}'.format(id))
-    conn.commit()
-    flash('Student Removed Successfully')
-    return redirect(url_for('home'))
+    if 'loggedin' in session:
+        cur.execute('DELETE FROM posted WHERE id = {0}'.format(id))
+        conn.commit()
+        flash('Post Removed Success')
+        return redirect(url_for('home'))
+    return redirect(url_for('login'))
+
+
+#======================================================================================================
+@app.route('/chatroom', methods=['POST','GET'])
+def chatroom():
+    # Check if user is loggedin
+    if 'loggedin' in session:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        c = "SELECT * FROM account"
+        cur.execute(c) # Execute the SQL
+        chat_display = cur.fetchall()
+        # User is loggedin show them the home page
+        return render_template('chat_room.html', username=session['username'],chat_display = chat_display)
+    # User is not loggedin redirect to login page
+    return redirect(url_for('login'))
+
+@app.route('/add_chat', methods=['POST'])
+def add_chat():
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    now = datetime.now()
+    if 'loggedin' in session:
+         if request.method == 'POST':
+            nickname = request.form['nickname']
+            chat = request.form['chat']
+            cur.execute("INSERT INTO account (nickname, chat, posted_on) VALUES (%s,%s,%s)", (nickname, chat, str(now)))
+            conn.commit()
+            print()
+            cur.close()
+            flash(' Added successfully')
+            return redirect(url_for('chatroom'))
+    return redirect(url_for('login'))
+
+@app.route('/room')
+def room():
+    return render_template('room.html')
+
+@app.route('/del_chat/<string:id>', methods = ['POST','GET'])
+def delete_chat(id):
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    if 'loggedin' in session:
+        cur.execute('DELETE FROM account WHERE id = {0}'.format(id))
+        conn.commit()
+        flash('Post Removed Success')
+        return redirect(url_for('chatroom'))
+    return redirect(url_for('login'))
+
 
 if __name__ == "__main__":
     app.run(debug=True)
